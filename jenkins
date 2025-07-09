@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    environment {
+        PYTHON_VERSION = '3.10'
+        SCAN_TARGET = 'scanme.nmap.org'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Cloning project...'
+                checkout scm
+            }
+        }
+
+        stage('Set up Python') {
+            steps {
+                echo 'Setting up Python environment...'
+                sh '''
+                    python3 --version
+                    python3 -m venv venv
+                    source venv/bin/activate
+                    pip install --upgrade pip
+                '''
+            }
+        }
+
+        stage('Run Port Scanner') {
+            steps {
+                echo "Running scan on ${env.SCAN_TARGET}..."
+                sh '''
+                    source venv/bin/activate
+                    python3 portscanner.py ${SCAN_TARGET} -sp 20 -ep 25
+                '''
+            }
+        }
+
+        stage('Archive Results') {
+            steps {
+                archiveArtifacts artifacts: '*.txt', allowEmptyArchive: true
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up workspace...'
+            cleanWs()
+        }
+    }
+}
