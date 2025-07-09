@@ -15,27 +15,33 @@ pipeline {
         }
 
         stage('Set up Python') {
-    steps {
-        echo 'Setting up Python environment...'
-        sh '''
-            python3 --version
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install --upgrade pip
-        '''
-    }
-}
+            steps {
+                echo 'Setting up Python environment...'
+                sh '''
+                    python3 --version
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                '''
+            }
+        }
 
-stage('Run Port Scanner') {
-    steps {
-        echo "Running scan on ${env.SCAN_TARGET}..."
-        sh '''
-            . venv/bin/activate
-            python3 portscanner.py ${SCAN_TARGET} -sp 20 -ep 25
-        '''
-    }
-}
+        stage('Run Port Scanner') {
+            steps {
+                echo "Running scan on ${env.SCAN_TARGET}..."
+                sh '''
+                    . venv/bin/activate
+                    python3 portscanner.py ${SCAN_TARGET} -sp 20 -ep 25
+                '''
+            }
+        }
 
+        stage('Archive Results') {
+            steps {
+                archiveArtifacts artifacts: '*.txt', allowEmptyArchive: true
+            }
+        }
+    }
 
     post {
         always {
